@@ -10,7 +10,6 @@ import (
 )
 
 type setting struct {
-	IP      string
 	POST    string
 	VERSION string
 	UPOST   string
@@ -85,7 +84,7 @@ func main() {
 			return
 		}
 
-		var outhtml = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>DownloadPage By Go</title>\n</head>\n<body>\n<h1>DownloadPage By Go</h1>\n<ul>\n    "
+		var outhtml = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>DownloadPage By Go</title>\n</head>\n<body>\n<h1>DownloadPage By Go</h1>\n<hr>\n<ul>\n    "
 		for _, onefile := range FileList {
 			if onefile.IsDir() {
 				outhtml = outhtml + "<li><a href=\"" + "\\DIR?dir=" + dir + "\\" + onefile.Name() + "\" style=\"background-color: yellow\">" + onefile.Name() + "</a></li>\n"
