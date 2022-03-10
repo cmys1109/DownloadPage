@@ -1,9 +1,12 @@
 package main
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/kataras/iris/v12"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -21,6 +24,11 @@ type setting struct {
 	DIR0          string
 	POWERWORD     string
 	CookieExpires int
+}
+
+type REInfo struct {
+	Exist bool   `json:"exist"`
+	SHA   string `json:"SHA"`
 }
 
 func main() {
@@ -135,13 +143,59 @@ func main() {
 		}
 	})
 
+	app.Get("/GetSHA", func(ctx iris.Context) {
+		path := ctx.URLParam("path")
+		if path == "" {
+			_, err := ctx.WriteString("ERROR PATH")
+			if err != nil {
+				return
+			}
+			return
+		}
+		app.Logger().Info(ctx.Path(), path, ctx.Request().RemoteAddr)
+
+		_, err := os.Stat(AppStart.DIR0 + path)
+		if os.IsNotExist(err) {
+			re, _ := json.Marshal(REInfo{Exist: false})
+			_, err := ctx.Write(re)
+			if err != nil {
+				return
+			}
+			return
+		}
+		var REJson REInfo
+		REJson.Exist = true
+		ha := sha1.New()
+		f, err := os.Open(AppStart.DIR0 + path)
+		if err != nil {
+			panic(err)
+		}
+		defer func(f *os.File) {
+			err := f.Close()
+			if err != nil {
+
+			}
+		}(f)
+		if _, err := io.Copy(ha, f); err != nil {
+			panic(err)
+		}
+		REJson.SHA = hex.EncodeToString(ha.Sum(nil))
+		fmt.Println(string(REJson.SHA))
+		re, _ := json.Marshal(REJson)
+		_, err = ctx.Write(re)
+		if err != nil {
+			return
+		}
+		fmt.Println("PUSHED")
+	})
+
 	err := app.Run(iris.Addr(AppStart.UPOST))
 	if err != nil {
 		return
 	}
 }
 
-const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 var src = rand.NewSource(time.Now().UnixNano())
 
