@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+
 	"strings"
 	"time"
 	"unsafe"
@@ -46,7 +47,7 @@ func main() {
 		return
 	}
 
-	var CookieExpires time.Duration = time.Duration(AppStart.CookieExpires)
+	var CookieExpires = time.Duration(AppStart.CookieExpires)
 	app := iris.New()
 
 	app.Get("/", func(ctx iris.Context) {
@@ -180,7 +181,7 @@ func main() {
 			panic(err)
 		}
 		REJson.SHA = hex.EncodeToString(ha.Sum(nil))
-		fmt.Println(string(REJson.SHA))
+		fmt.Println(REJson.SHA)
 		re, _ := json.Marshal(REJson)
 		_, err = ctx.Write(re)
 		if err != nil {
@@ -195,6 +196,7 @@ func main() {
 	}
 }
 
+//Copy
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 var src = rand.NewSource(time.Now().UnixNano())
