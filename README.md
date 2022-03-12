@@ -14,7 +14,7 @@ Read dir and output HTML for download.
 ## update_02_RE04
 ```update_02_RE04
 1.修复路径问题，适配linux(linux系统亲测可用)
-2.修复没有设置密码，过来cookie时间无法下载
+2.修复没有设置密码，过了cookie时间无法下载
 3.优化了配置项，减少无用配置项
 ```
 
