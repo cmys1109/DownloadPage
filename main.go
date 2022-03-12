@@ -18,13 +18,11 @@ import (
 )
 
 type setting struct {
-	POST          string
-	VERSION       string
-	UPOST         string
-	DIR           string
-	DIR0          string
-	POWERWORD     string
-	CookieExpires int
+	Title         string `json:"title"`
+	Post          string `json:"post"`
+	Dir           string `json:"dir"`
+	Passwd        string `json:"passwd"`
+	CookieExpires int    `json:"cookie_expires"`
 }
 
 type REInfo struct {
@@ -35,15 +33,9 @@ type REInfo struct {
 func main() {
 	var AppStart setting
 	var js, _ = ioutil.ReadFile("./App.json")
-	var jsonerr = json.Unmarshal(js, &AppStart)
-	if jsonerr != nil {
-		fmt.Println(jsonerr)
-		var goin string
-		scanln, err := fmt.Scanln(&goin)
-		if err != nil {
-			fmt.Println(scanln)
-			return
-		}
+	err := json.Unmarshal(js, &AppStart)
+	if err != nil {
+		panic(err)
 		return
 	}
 
@@ -51,79 +43,27 @@ func main() {
 	app := iris.New()
 
 	app.Get("/", func(ctx iris.Context) {
-		if ctx.URLParam("powerword") == AppStart.POWERWORD {
+		if ctx.URLParam("powerword") == AppStart.Passwd {
 			ctx.UpsertCookie(&http.Cookie{Name: "Download_Licence", Value: randStr(32), Expires: time.Now().Add(CookieExpires * time.Second)})
 		}
 		UserIP := ctx.Request().RemoteAddr
 		app.Logger().Info(ctx.Path(), UserIP)
-		FileList, err := ioutil.ReadDir(AppStart.DIR)
+		FileList, err := ioutil.ReadDir(AppStart.Dir)
 		if err != nil {
+			panic(err)
 			return
 		}
 
-		var outhtml = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>DownloadPage By Go</title>\n</head>\n<body>\n<h1>DownloadPage By Go</h1>\n<hr>\n<ul>\n    "
+		var outhtml = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>" + AppStart.Title + "</title>\n</head>\n<body>\n<h1>" + AppStart.Title + "</h1>\n<hr>\n<ul>\n    "
 		for _, onefile := range FileList {
 			if onefile.IsDir() {
-				outhtml = outhtml + "<li><a href=\"" + "\\DIR?dir=" + onefile.Name() + "\" style=\"background-color: yellow\">" + onefile.Name() + "</a></li>\n"
+				outhtml = outhtml + "<li><a href=\"" + "\\Dir?dir=" + onefile.Name() + "\" style=\"background-color: yellow\">" + onefile.Name() + "</a></li>\n"
 			} else {
-				file, err := os.Stat(AppStart.DIR0 + onefile.Name())
+				file, err := os.Stat(AppStart.Dir + "/" + onefile.Name())
 				if err == nil {
 					outhtml = outhtml + "<li><a href=\"" + "\\DW?file=" + onefile.Name() + "\">" + onefile.Name() + "------" + fmt.Sprintf("%d", file.Size()) + "B</a></li>\n"
 				} else {
-					return
-				}
-			}
-		}
-
-		outhtml = outhtml + "</ul>\n</body>\n</html>"
-		htmllen, err := ctx.HTML(outhtml)
-		if err != nil {
-			app.Logger().Error(htmllen)
-			return
-		}
-	})
-
-	app.Get("/DW", func(ctx iris.Context) {
-		file := ctx.URLParam("file")
-		if ctx.URLParam("powerword") == AppStart.POWERWORD {
-			ctx.UpsertCookie(&http.Cookie{Name: "Download_Licence", Value: randStr(32), Expires: time.Now().Add(CookieExpires * time.Second)})
-		}
-		CookieValue := ctx.GetCookie("Download_Licence")
-		if CookieValue == "" {
-			var outhtml = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>DownloadPage By Go</title>\n</head>\n<body>\n<h1>DownloadPage By Go</h1>\n<hr>\n<h1>Incorrect password</h1>\n<h1>密码不正确</h1>\n</body>\n</html>"
-			_, err := ctx.HTML(outhtml)
-			if err != nil {
-				return
-			}
-			return
-		}
-		app.Logger().Info(ctx.Path(), file, ctx.Request().RemoteAddr)
-
-		fs := strings.Split(file, "\\")
-		err := ctx.SendFile(AppStart.DIR0+file, fs[len(fs)-1])
-		if err != nil {
-			app.Logger().Error(err.Error())
-		}
-	})
-
-	app.Get("/DIR", func(ctx iris.Context) {
-		dir := ctx.URLParam("dir")
-		app.Logger().Info(ctx.Path(), dir, ctx.Request().RemoteAddr)
-
-		FileList, err := ioutil.ReadDir(AppStart.DIR0 + dir)
-		if err != nil {
-			return
-		}
-
-		var outhtml = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>DownloadPage By Go</title>\n</head>\n<body>\n<h1>DownloadPage By Go</h1>\n<hr>\n<ul>\n    "
-		for _, onefile := range FileList {
-			if onefile.IsDir() {
-				outhtml = outhtml + "<li><a href=\"" + "\\DIR?dir=" + dir + "\\" + onefile.Name() + "\" style=\"background-color: yellow\">" + onefile.Name() + "</a></li>\n"
-			} else {
-				file, err := os.Stat(AppStart.DIR0 + dir + "\\" + onefile.Name())
-				if err == nil {
-					outhtml = outhtml + "<li><a href=\"" + "\\DW?file=" + dir + "\\" + onefile.Name() + "\">" + onefile.Name() + "------" + fmt.Sprintf("%d", file.Size()) + "B</a></li>\n"
-				} else {
+					panic(err)
 					return
 				}
 			}
@@ -132,6 +72,64 @@ func main() {
 		outhtml = outhtml + "</ul>\n</body>\n</html>"
 		_, err = ctx.HTML(outhtml)
 		if err != nil {
+			panic(err)
+			return
+		}
+	})
+
+	app.Get("/DW", func(ctx iris.Context) {
+		file := ctx.URLParam("file")
+		if ctx.URLParam("powerword") == AppStart.Passwd {
+			ctx.UpsertCookie(&http.Cookie{Name: "Download_Licence", Value: randStr(32), Expires: time.Now().Add(CookieExpires * time.Second)})
+		}
+		CookieValue := ctx.GetCookie("Download_Licence")
+		if CookieValue == "" && AppStart.Passwd != "" {
+			var outhtml = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>" + AppStart.Title + "</title>\n</head>\n<body>\n<h1>" + AppStart.Title + "</h1>\n<hr>\n<h1>Invalid authentication</h1>\n<h1>认证信息无效</h1>\n</body>\n</html>"
+			_, err := ctx.HTML(outhtml)
+			if err != nil {
+				panic(err)
+				return
+			}
+			return
+		}
+		app.Logger().Info(ctx.Path(), file, ctx.Request().RemoteAddr)
+
+		fs := strings.Split(file, "/")
+		err := ctx.SendFile(AppStart.Dir+"/"+file, fs[len(fs)-1])
+		if err != nil {
+			app.Logger().Error(err.Error())
+		}
+	})
+
+	app.Get("/Dir", func(ctx iris.Context) {
+		dir := ctx.URLParam("dir")
+		app.Logger().Info(ctx.Path(), dir, ctx.Request().RemoteAddr)
+
+		FileList, err := ioutil.ReadDir(AppStart.Dir + "/" + dir)
+		if err != nil {
+			panic(err)
+			return
+		}
+
+		var outhtml = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>" + AppStart.Title + "</title>\n</head>\n<body>\n<h1>" + AppStart.Title + "</h1>\n<hr>\n<ul>\n    "
+		for _, onefile := range FileList {
+			if onefile.IsDir() {
+				outhtml = outhtml + "<li><a href=\"" + "\\Dir?dir=" + dir + "/" + onefile.Name() + "\" style=\"background-color: yellow\">" + onefile.Name() + "</a></li>\n"
+			} else {
+				file, err := os.Stat(AppStart.Dir + "/" + dir + "/" + onefile.Name())
+				if err == nil {
+					outhtml = outhtml + "<li><a href=\"" + "\\DW?file=" + dir + "/" + onefile.Name() + "\">" + onefile.Name() + "------" + fmt.Sprintf("%d", file.Size()) + "B</a></li>\n"
+				} else {
+					panic(err)
+					return
+				}
+			}
+		}
+
+		outhtml = outhtml + "</ul>\n</body>\n</html>"
+		_, err = ctx.HTML(outhtml)
+		if err != nil {
+			panic(err)
 			return
 		}
 	})
@@ -140,6 +138,7 @@ func main() {
 		ctx.RemoveCookie("Download_Licence")
 		_, err := ctx.WriteString("Download_Licence removed")
 		if err != nil {
+			panic(err)
 			return
 		}
 	})
@@ -149,17 +148,19 @@ func main() {
 		if path == "" {
 			_, err := ctx.WriteString("ERROR PATH")
 			if err != nil {
+				panic(err)
 				return
 			}
 			return
 		}
 		app.Logger().Info(ctx.Path(), path, ctx.Request().RemoteAddr)
 
-		_, err := os.Stat(AppStart.DIR0 + path)
+		_, err := os.Stat(AppStart.Dir + "/" + path)
 		if os.IsNotExist(err) {
 			re, _ := json.Marshal(REInfo{Exist: false})
 			_, err := ctx.Write(re)
 			if err != nil {
+				panic(err)
 				return
 			}
 			return
@@ -167,7 +168,7 @@ func main() {
 		var REJson REInfo
 		REJson.Exist = true
 		ha := sha1.New()
-		f, err := os.Open(AppStart.DIR0 + path)
+		f, err := os.Open(AppStart.Dir + "/" + path)
 		if err != nil {
 			panic(err)
 		}
@@ -185,13 +186,15 @@ func main() {
 		re, _ := json.Marshal(REJson)
 		_, err = ctx.Write(re)
 		if err != nil {
+			panic(err)
 			return
 		}
 		fmt.Println("PUSHED")
 	})
 
-	err := app.Run(iris.Addr(AppStart.UPOST))
+	err = app.Run(iris.Addr(":" + AppStart.Post))
 	if err != nil {
+		panic(err)
 		return
 	}
 }

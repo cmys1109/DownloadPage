@@ -1,9 +1,7 @@
 {
-  "POST": "5000",
-  "VERSION": "1.0",
-  "UPOST": ":5000",
-  "DIR": ".\\f",
-  "DIR0": ".\\f\\",
-  "POWERWORD": "",
-  "CookieExpires": 60
+  "title": " DownloadPage ||| DEV by cmys1109",
+  "post": "5000",
+  "dir": "./f",
+  "passwd": "",
+  "cookie_expires": 60
 }
